@@ -13,11 +13,11 @@ SimpleDNS is a lightweight and easy-to-use DNS server written in Go. It listens 
 
 ## Installation
 
-1. Install [Go](https://golang.org/doc/install) (version 1.16 or later).
+1. Install [Go](https://golang.org/doc/install) 
 2. Clone the repository:
 
 ```sh
-git clone https://github.com/yourusername/SimpleDNS.git
+git clone https://github.com/44670/SimpleDNS
 ```
 
 3. Change to the SimpleDNS directory:
