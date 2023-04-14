@@ -38,7 +38,7 @@ go build
 
 ```json
 {
-  "dohurl": "https://dns.google.com/resolve",
+  "dohurl": "https://8.8.8.8/resolve",
   "rules": {
     "example.com": "0.0.0.0",
     "*.including-subdomain.com": "0.0.0.0"
