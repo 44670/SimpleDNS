@@ -40,7 +40,8 @@ go build
 {
   "dohurl": "https://dns.google.com/resolve",
   "rules": {
-    "example.com": "1.1.1.1"
+    "example.com": "0.0.0.0",
+    "*.including-subdomain.com": "0.0.0.0"
   }
 }
 ```
