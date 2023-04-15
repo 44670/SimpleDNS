@@ -1,6 +1,8 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
+# 1. Install go 2. Install dependencies 3. Build for linux amd64 4. Build for windows 386
+
 name: Go
 
 on:
@@ -21,6 +23,19 @@ jobs:
       with:
         go-version: 1.20
 
-    - name: Build
-      run: go build 
+    - name: Install deps
+      run: go mod download
 
+    - name: Build for linux amd64
+      run: GOOS=linux GOARCH=amd64 go build -o simpledns-linux-amd64
+    
+    - name: Build for windows 386
+      run: GOOS=windows GOARCH=386 go build -o simpledns-windows-386.exe
+
+    - name: Upload binaries with git commit hash
+      uses: actions/upload-artifact@v2
+      with:
+        name: simpledns-${{ github.sha }}
+        path: |
+          simpledns-linux-amd64
+          simpledns-windows-386.exe

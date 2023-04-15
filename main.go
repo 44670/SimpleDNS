@@ -87,8 +87,8 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	for _, question := range r.Question {
 		switch question.Qtype {
 		case dns.TypeA:
-			ip := resolveDomain(h.dohURL, question.Name)
-			log.Printf("Resolved domain: %s, IP: %s\n", question.Name, ip)
+			ip, from := resolveDomain(h.dohURL, question.Name)
+			log.Printf("Resolved domain: %s, IP: %s (from %s)\n", question.Name, ip, from)
 			if ip != "" {
 				rr := &dns.A{
 					Hdr: dns.RR_Header{
@@ -107,18 +107,16 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(&msg)
 }
 
-func resolveDomain(dohURL, domain string) string {
+func resolveDomain(dohURL, domain string) (string, string) {
 	domain = strings.TrimSuffix(domain, ".")
 	if ip, ok := matchDomainMap[domain]; ok {
-		log.Printf("Resolved domain: %s, IP: %s (from domain rule)\n", domain, ip)
-		return ip
+		return ip, "domain rule"
 	}
 
 	subDomain := domain
 	for {
 		if ip, ok := matchDomainAndSubDomainMap[subDomain]; ok {
-			log.Printf("Resolved domain: %s, IP: %s (from subdomain rule)\n", domain, ip)
-			return ip
+			return ip, "subdomain rule"
 		}
 		split := strings.SplitN(subDomain, ".", 2)
 		if len(split) < 2 {
@@ -130,8 +128,7 @@ func resolveDomain(dohURL, domain string) string {
 	if entry, ok := ipCache.Load(cacheKey); ok {
 		ipEntry := entry.(IPCacheEntry)
 		if time.Now().Before(ipEntry.ExpireAt) {
-			log.Printf("Resolved domain: %s, IP: %s (from cache)\n", domain, ipEntry.IP)
-			return ipEntry.IP
+			return ipEntry.IP, "cache"
 		}
 	}
 
@@ -141,11 +138,11 @@ func resolveDomain(dohURL, domain string) string {
 			IP:       ret,
 			ExpireAt: time.Now().Add(10 * time.Minute),
 		})
-		log.Printf("Resolved domain: %s, IP: %s (from DoH)\n", domain, ret)
+		return ret, "DoH"
 	} else {
 		log.Printf("Error resolving domain: %s\n", domain)
 	}
-	return ret
+	return "", ""
 }
 
 func resolveDomainOverDoH(dohURL, domain string) string {
