@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"io/ioutil"
 	"log"
 	"net"
@@ -14,8 +15,9 @@ import (
 )
 
 type Config struct {
-	DoHURL string            `json:"dohurl"`
-	Rules  map[string]string `json:"rules"`
+	DoHURL    string            `json:"dohurl"`
+	Rules     map[string]string `json:"rules"`
+	Variables map[string]string `json:"variables"`
 }
 
 type IPCacheEntry struct {
@@ -26,13 +28,22 @@ type IPCacheEntry struct {
 var ipCache sync.Map
 var matchDomainMap = make(map[string]string)
 var matchDomainAndSubDomainMap = make(map[string]string)
+var varMap = make(map[string]string)
 
 var dohHttpClient = &http.Client{Timeout: 30 * time.Second}
 
 func main() {
+	flagSilent := flag.Bool("silent", false, "Silent mode")
+	flag.Parse()
+	if *flagSilent {
+		log.SetOutput(ioutil.Discard)
+	}
 	config, err := loadConfig("config.json")
 	if err != nil {
 		log.Fatalf("Error loading config: %v", err)
+	}
+	if config.Variables != nil {
+		varMap = config.Variables
 	}
 
 	splitRules(config.Rules)
@@ -88,6 +99,11 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		switch question.Qtype {
 		case dns.TypeA:
 			ip, from := resolveDomain(h.dohURL, question.Name)
+			ip2, ok := varMap[ip]
+			if ok {
+				log.Printf("Matched variable: %s -> %s\n", ip, ip2)
+				ip = ip2
+			}
 			log.Printf("Resolved domain: %s, IP: %s (from %s)\n", question.Name, ip, from)
 			if ip != "" {
 				rr := &dns.A{

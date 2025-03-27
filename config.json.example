@@ -1,0 +1,10 @@
+{
+    "dohurl": "https://1.12.12.12/resolve",
+    "rules" : {
+        "*.openai.com": "0.0.0.0",
+        "*.myhome": "me"
+    },
+    "variables": {
+        "me": "192.168.1.23"
+    }
+}
